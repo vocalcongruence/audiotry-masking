@@ -6,7 +6,8 @@
   </head>
   <body>
     <h1>Live Audio Monitor</h1>
-    <button id="intercom">Intercom</button>
+    <button id="intercom">Start Intercom</button>
+    <button id="intercom-stop">Stop Intercom</button>
     <button id="playNoise">Start Noise</button>
     <p id="status"></p>
 
@@ -125,7 +126,7 @@
           play: playNoise,
           stop: stopNoise,
           fade: fadeNoise,
-          audioContext
+          audioContext,
         };
       })();
 
@@ -144,41 +145,41 @@
 
       let audioContext, stream, source;
 
-      button.addEventListener("pointerdown", async () => {
+      button.addEventListener("click", async () => {
         try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext = Noise.audioContext; // use the shared context
-    source = audioContext.createMediaStreamSource(stream);
-    source.connect(audioContext.destination);
+          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioContext = Noise.audioContext; // use the shared context
+          source = audioContext.createMediaStreamSource(stream);
+          source.connect(audioContext.destination);
 
-    // Halve the volume smoothly
-    if (noise.gainNode) {
-      const now = audioContext.currentTime;
-      const current = noise.gainNode.gain.value;
-      noise.gainNode.gain.cancelScheduledValues(now);
-      noise.gainNode.gain.setValueAtTime(current, now);
-      noise.gainNode.gain.linearRampToValueAtTime(current / 2, now + 0.5);
-    }
-  } catch (err) {
-    console.error("Error:", err);
-  }
+          // Halve the volume smoothly
+          if (noise.gainNode) {
+            const now = audioContext.currentTime;
+            const current = noise.gainNode.gain.value;
+            noise.gainNode.gain.cancelScheduledValues(now);
+            noise.gainNode.gain.setValueAtTime(current, now);
+            noise.gainNode.gain.linearRampToValueAtTime(current / 2, now + 0.5);
+          }
+        } catch (err) {
+          console.error("Error:", err);
+        }
       });
 
-      button.addEventListener("pointerup", () => {
+      document.getElementById("intercom-stop").addEventListener("click", () => {
         if (source) source.disconnect();
-  if (stream) {
-    stream.getTracks().forEach(track => track.stop());
-    stream = null;
-  }
+        if (stream) {
+          stream.getTracks().forEach((track) => track.stop());
+          stream = null;
+        }
 
-  // Restore volume
-  if (noise.gainNode) {
-    const now = Noise.audioContext.currentTime;
-    const current = noise.gainNode.gain.value;
-    noise.gainNode.gain.cancelScheduledValues(now);
-    noise.gainNode.gain.setValueAtTime(current, now);
-    noise.gainNode.gain.linearRampToValueAtTime(noise.volume, now + 0.5);
-  }
+        // Restore volume
+        if (noise.gainNode) {
+          const now = Noise.audioContext.currentTime;
+          const current = noise.gainNode.gain.value;
+          noise.gainNode.gain.cancelScheduledValues(now);
+          noise.gainNode.gain.setValueAtTime(current, now);
+          noise.gainNode.gain.linearRampToValueAtTime(noise.volume, now + 0.5);
+        }
       });
     </script>
   </body>

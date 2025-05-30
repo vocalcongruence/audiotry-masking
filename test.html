@@ -6,12 +6,14 @@
   </head>
   <body>
     <h1>Live Audio Monitor</h1>
-    <button id="intercom">Start Intercom</button>
-    <button id="intercom-stop">Stop Intercom</button>
+    <button id="intercom">Intercom</button>
     <button id="playNoise">Start Noise</button>
     <p id="status"></p>
 
     <script>
+      let audioContext = null;
+      window.sharedAudioContext = null;
+
       var supportsES6 = (function () {
         try {
           new Function("(a = 0) => a");
@@ -21,33 +23,23 @@
         }
       })();
 
-      // Web Audio API - White noise, generate, play (volume, fadeIn, fadeOut, loop), stop, fade - v1.0 MJF @ websemantics.uk
-      //*
       var Noise = (function () {
         "use strict";
-        if (!supportsES6) {
-          return;
-        }
-
-        const audioContext = new (window.AudioContext ||
-          window.webkitAudioContext)();
+        if (!supportsES6) return;
 
         let fadeOutTimer;
 
-        // https://noisehack.com/generate-noise-web-audio-api/
         function createNoise(track) {
-          const bufferSize = 2 * audioContext.sampleRate;
-          const noiseBuffer = audioContext.createBuffer(
+          const bufferSize = 2 * window.sharedAudioContext.sampleRate;
+          const noiseBuffer = window.sharedAudioContext.createBuffer(
             1,
             bufferSize,
-            audioContext.sampleRate
+            window.sharedAudioContext.sampleRate
           );
           const output = noiseBuffer.getChannelData(0);
-
           for (let i = 0; i < bufferSize; i++) {
             output[i] = Math.random() * 2 - 1;
           }
-
           track.audioSource.buffer = noiseBuffer;
         }
 
@@ -59,20 +51,13 @@
         }
 
         function fadeNoise(track) {
-          if (track.fadeOut) {
-            track.fadeOut = track.fadeOut >= 0 ? track.fadeOut : 0.5;
-          } else {
-            track.fadeOut = 0.5;
-          }
-
+          track.fadeOut = track.fadeOut >= 0 ? track.fadeOut : 0.5;
           if (track.canFade) {
             track.gainNode.gain.linearRampToValueAtTime(
               0,
-              audioContext.currentTime + track.fadeOut
+              window.sharedAudioContext.currentTime + track.fadeOut
             );
-
             track.canFade = false;
-
             fadeOutTimer = setTimeout(() => {
               stopNoise(track);
             }, track.fadeOut * 1000);
@@ -82,33 +67,24 @@
         }
 
         function buildTrack(track) {
-          track.audioSource = audioContext.createBufferSource();
-          track.gainNode = audioContext.createGain();
+          track.audioSource = window.sharedAudioContext.createBufferSource();
+          track.gainNode = window.sharedAudioContext.createGain();
           track.audioSource.connect(track.gainNode);
-          track.gainNode.connect(audioContext.destination);
-          track.canFade = true; // used to prevent fadeOut firing twice
-          noise.gainNode = track.gainNode;
+          track.gainNode.connect(window.sharedAudioContext.destination);
+          track.canFade = true;
         }
 
         function setGain(track) {
           track.volume = track.volume >= 0 ? track.volume : 0.5;
-
-          if (track.fadeIn) {
-            track.fadeIn = track.fadeIn >= 0 ? track.fadeIn : 0.5;
-          } else {
-            track.fadeIn = 0.5;
-          }
-
-          track.gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-
+          track.fadeIn = track.fadeIn >= 0 ? track.fadeIn : 0.5;
+          track.gainNode.gain.setValueAtTime(0, window.sharedAudioContext.currentTime);
           track.gainNode.gain.linearRampToValueAtTime(
             track.volume / 4,
-            audioContext.currentTime + track.fadeIn / 2
+            window.sharedAudioContext.currentTime + track.fadeIn / 2
           );
-
           track.gainNode.gain.linearRampToValueAtTime(
             track.volume,
-            audioContext.currentTime + track.fadeIn
+            window.sharedAudioContext.currentTime + track.fadeIn
           );
         }
 
@@ -121,38 +97,44 @@
           track.audioSource.start();
         }
 
-        // Expose functions:
         return {
           play: playNoise,
           stop: stopNoise,
           fade: fadeNoise,
-          audioContext,
+          setVolume: setGain
         };
       })();
 
       var noise = {
-        volume: 0.05, // 0 - 1
-        fadeIn: 2.5, // time in seconds
-        fadeOut: 1.3, // time in seconds
+        volume: 0.05,
+        fadeIn: 2.5,
+        fadeOut: 1.3,
+        gainNode: null
       };
 
       document.getElementById("playNoise").onclick = () => {
+        if (!window.sharedAudioContext) {
+          window.sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        audioContext = window.sharedAudioContext;
         Noise.play(noise);
       };
 
-      ///////////////////////////
       const button = document.getElementById("intercom");
+      let stream, source;
 
-      let audioContext, stream, source;
-
-      button.addEventListener("click", async () => {
+      button.addEventListener("pointerdown", async () => {
         try {
+          if (!window.sharedAudioContext) {
+            window.sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          audioContext = window.sharedAudioContext;
+
           stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          audioContext = Noise.audioContext; // use the shared context
           source = audioContext.createMediaStreamSource(stream);
           source.connect(audioContext.destination);
 
-          // Halve the volume smoothly
+          // Fade noise volume down
           if (noise.gainNode) {
             const now = audioContext.currentTime;
             const current = noise.gainNode.gain.value;
@@ -165,16 +147,16 @@
         }
       });
 
-      document.getElementById("intercom-stop").addEventListener("click", () => {
+      button.addEventListener("pointerup", () => {
         if (source) source.disconnect();
         if (stream) {
-          stream.getTracks().forEach((track) => track.stop());
+          stream.getTracks().forEach(track => track.stop());
           stream = null;
         }
 
-        // Restore volume
-        if (noise.gainNode) {
-          const now = Noise.audioContext.currentTime;
+        // Fade noise volume up
+        if (noise.gainNode && audioContext) {
+          const now = audioContext.currentTime;
           const current = noise.gainNode.gain.value;
           noise.gainNode.gain.cancelScheduledValues(now);
           noise.gainNode.gain.setValueAtTime(current, now);

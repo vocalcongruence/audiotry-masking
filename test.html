@@ -1,168 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Live Audio Monitor</title>
-  </head>
-  <body>
-    <h1>Live Audio Monitor</h1>
-    <button id="intercom">Intercom</button>
-    <button id="playNoise">Start Noise</button>
-    <p id="status"></p>
+<head>
+  <meta charset="UTF-8" />
+  <title>Live Audio Monitor</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    button { font-size: 1.2rem; margin: 0.5rem; padding: 0.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Live Audio Monitor</h1>
+  <button id="intercom">Intercom</button>
+  <button id="playNoise">Start Noise</button>
+  <p id="status"></p>
 
-    <script>
-      let audioContext = null;
-      window.sharedAudioContext = null;
+  <script>
+    class NoisePlayer {
+      constructor(audioContext, url, volume = 0.05) {
+        this.audioContext = audioContext;
+        this.url = url;
+        this.volume = volume;
+        this.gainNode = this.audioContext.createGain();
+        this.gainNode.connect(this.audioContext.destination);
+        this.buffer = null;
+        this.source = null;
+      }
 
-      var supportsES6 = (function () {
+      async load() {
+        const response = await fetch(this.url);
+        const arrayBuffer = await response.arrayBuffer();
+        this.buffer = await this.audioContext.decodeAudioData(arrayBuffer);
+      }
+
+      play(fadeIn = 1.0) {
+        this.stop();
+
+        this.source = this.audioContext.createBufferSource();
+        this.source.buffer = this.buffer;
+        this.source.loop = true;
+        this.source.connect(this.gainNode);
+
+        const now = this.audioContext.currentTime;
+        this.gainNode.gain.setValueAtTime(0, now);
+        this.gainNode.gain.linearRampToValueAtTime(this.volume, now + fadeIn);
+
+        this.source.start();
+      }
+
+      fadeTo(targetVolume, duration = 0.5) {
+        const now = this.audioContext.currentTime;
+        this.gainNode.gain.cancelScheduledValues(now);
+        this.gainNode.gain.linearRampToValueAtTime(targetVolume, now + duration);
+      }
+
+      stop(fadeOut = 1.0) {
+        if (!this.source) return;
+
+        const now = this.audioContext.currentTime;
+        this.gainNode.gain.linearRampToValueAtTime(0, now + fadeOut);
+        setTimeout(() => {
+          try { this.source.stop(); } catch {}
+          this.source.disconnect();
+          this.source = null;
+        }, fadeOut * 1000);
+      }
+    }
+
+    class IntercomController {
+      constructor(audioContext) {
+        this.audioContext = audioContext;
+        this.stream = null;
+        this.source = null;
+      }
+
+      async start() {
+        this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        this.source = this.audioContext.createMediaStreamSource(this.stream);
+        this.source.connect(this.audioContext.destination);
+      }
+
+      stop() {
+        if (this.source) this.source.disconnect();
+        if (this.stream) {
+          this.stream.getTracks().forEach(t => t.stop());
+          this.stream = null;
+        }
+      }
+    }
+
+    (async () => {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const noise = new NoisePlayer(ctx, 'noise.wav', 0.05);
+      const intercom = new IntercomController(ctx);
+
+      await noise.load();
+
+      document.getElementById('playNoise').addEventListener('click', () => {
+        noise.play(2.5);
+      });
+
+      const intercomBtn = document.getElementById('intercom');
+
+      intercomBtn.addEventListener('pointerdown', async () => {
         try {
-          new Function("(a = 0) => a");
-          return true;
+          await intercom.start();
+          noise.fadeTo(noise.volume / 2, 0.5);
         } catch (err) {
-          return false;
-        }
-      })();
-
-      var Noise = (function () {
-        "use strict";
-        if (!supportsES6) return;
-
-        let fadeOutTimer;
-
-        function createNoise(track) {
-          const bufferSize = 2 * window.sharedAudioContext.sampleRate;
-          const noiseBuffer = window.sharedAudioContext.createBuffer(
-            1,
-            bufferSize,
-            window.sharedAudioContext.sampleRate
-          );
-          const output = noiseBuffer.getChannelData(0);
-          for (let i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 2 - 1;
-          }
-          track.audioSource.buffer = noiseBuffer;
-        }
-
-        function stopNoise(track) {
-          if (track.audioSource) {
-            clearTimeout(fadeOutTimer);
-            track.audioSource.stop();
-          }
-        }
-
-        function fadeNoise(track) {
-          track.fadeOut = track.fadeOut >= 0 ? track.fadeOut : 0.5;
-          if (track.canFade) {
-            track.gainNode.gain.linearRampToValueAtTime(
-              0,
-              window.sharedAudioContext.currentTime + track.fadeOut
-            );
-            track.canFade = false;
-            fadeOutTimer = setTimeout(() => {
-              stopNoise(track);
-            }, track.fadeOut * 1000);
-          } else {
-            stopNoise(track);
-          }
-        }
-
-        function buildTrack(track) {
-          track.audioSource = window.sharedAudioContext.createBufferSource();
-          track.gainNode = window.sharedAudioContext.createGain();
-          track.audioSource.connect(track.gainNode);
-          track.gainNode.connect(window.sharedAudioContext.destination);
-          track.canFade = true;
-        }
-
-        function setGain(track) {
-          track.volume = track.volume >= 0 ? track.volume : 0.5;
-          track.fadeIn = track.fadeIn >= 0 ? track.fadeIn : 0.5;
-          track.gainNode.gain.setValueAtTime(0, window.sharedAudioContext.currentTime);
-          track.gainNode.gain.linearRampToValueAtTime(
-            track.volume / 4,
-            window.sharedAudioContext.currentTime + track.fadeIn / 2
-          );
-          track.gainNode.gain.linearRampToValueAtTime(
-            track.volume,
-            window.sharedAudioContext.currentTime + track.fadeIn
-          );
-        }
-
-        function playNoise(track) {
-          stopNoise(track);
-          buildTrack(track);
-          createNoise(track);
-          setGain(track);
-          track.audioSource.loop = true;
-          track.audioSource.start();
-        }
-
-        return {
-          play: playNoise,
-          stop: stopNoise,
-          fade: fadeNoise,
-          setVolume: setGain
-        };
-      })();
-
-      var noise = {
-        volume: 0.05,
-        fadeIn: 2.5,
-        fadeOut: 1.3,
-        gainNode: null
-      };
-
-      document.getElementById("playNoise").onclick = () => {
-        if (!window.sharedAudioContext) {
-          window.sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        audioContext = window.sharedAudioContext;
-        Noise.play(noise);
-      };
-
-      const button = document.getElementById("intercom");
-      let stream, source;
-
-      button.addEventListener("pointerdown", async () => {
-        try {
-          if (!window.sharedAudioContext) {
-            window.sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-          }
-          audioContext = window.sharedAudioContext;
-
-          stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-          source = audioContext.createMediaStreamSource(stream);
-          source.connect(audioContext.destination);
-
-          // Fade noise volume down
-          if (noise.gainNode) {
-            const now = audioContext.currentTime;
-            const current = noise.gainNode.gain.value;
-            noise.gainNode.gain.cancelScheduledValues(now);
-            noise.gainNode.gain.setValueAtTime(current, now);
-            noise.gainNode.gain.linearRampToValueAtTime(current / 2, now + 0.5);
-          }
-        } catch (err) {
-          console.error("Error:", err);
+          console.error("Mic error:", err);
         }
       });
 
-      button.addEventListener("pointerup", () => {
-        if (source) source.disconnect();
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-          stream = null;
-        }
-
-        // Fade noise volume up
-        if (noise.gainNode && audioContext) {
-          const now = audioContext.currentTime;
-          const current = noise.gainNode.gain.value;
-          noise.gainNode.gain.cancelScheduledValues(now);
-          noise.gainNode.gain.setValueAtTime(current, now);
-          noise.gainNode.gain.linearRampToValueAtTime(noise.volume, now + 0.5);
-        }
+      intercomBtn.addEventListener('pointerup', () => {
+        intercom.stop();
+        noise.fadeTo(noise.volume, 0.5);
       });
-    </script>
-  </body>
+    })();
+  </script>
+</body>
 </html>

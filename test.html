@@ -1,100 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Live Audio Monito  r</title>
-  <style>
-    body { font-family: sans-serif; text-align: center; padding: 2em; }
-    button { font-size: 1.2em; margin: 1em; padding: 1em 2em; }
-  </style>
-</head>
-<body>
-  <h1>Live Audio Monitor</h1>
-  <button id="intercom">Intercom</button>
-  <button id="playNoise">Start Noise</button>
-  <p id="status"></p>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Live Audio Monitor</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: black;
+        color: lightgray;
+        font-family: sans-serif;
+        gap: 16px;
+      }
+      h1 {
+        font-size: 6rem;
+        text-align: center;
+      }
+      button {
+        width: 100%;
+        height: 40vh;
+        font-size: 10rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Audio Masking Tool</h1>
+    <button id="intercom">Intercom</button>
+    <button id="playNoise">Start Noise</button>
 
-  <script>
-    const noiseTrack = {
-      volume: 0.1,
-      fadeTime: 0.5,
-      audioCtx: null,
-      gainNode: null,
-      source: null
-    };
+    <script>
+      const noiseTrack = {
+        volume: 0.1,
+        fadeTime: 2,
+        audioCtx: null,
+        gainNode: null,
+        source: null,
+      };
 
-    const intercomState = {
-      audioCtx: null,
-      stream: null,
-      source: null,
-      isConnected: false
-    };
+      const intercomState = {
+        audioCtx: null,
+        stream: null,
+        source: null,
+        isConnected: false,
+      };
 
-    async function loadAndPlayNoise() {
-      if (noiseTrack.audioCtx) return;
+      async function loadAndPlayNoise() {
+        if (!noiseTrack.audioCtx) {
+          noiseTrack.audioCtx = new (window.AudioContext ||
+            window.webkitAudioContext)();
+          noiseTrack.gainNode = noiseTrack.audioCtx.createGain();
+          noiseTrack.gainNode.connect(noiseTrack.audioCtx.destination);
+        }
 
-      noiseTrack.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      noiseTrack.gainNode = noiseTrack.audioCtx.createGain();
-      noiseTrack.gainNode.gain.setValueAtTime(noiseTrack.volume, noiseTrack.audioCtx.currentTime);
-      noiseTrack.gainNode.connect(noiseTrack.audioCtx.destination);
+        // Start at zero volume
+        noiseTrack.gainNode.gain.setValueAtTime(
+          0,
+          noiseTrack.audioCtx.currentTime
+        );
 
-      const res = await fetch("noise.wav");
-      const arrayBuffer = await res.arrayBuffer();
-      const buffer = await noiseTrack.audioCtx.decodeAudioData(arrayBuffer);
+        const res = await fetch("noise.wav");
+        const arrayBuffer = await res.arrayBuffer();
+        const buffer = await noiseTrack.audioCtx.decodeAudioData(arrayBuffer);
 
-      noiseTrack.source = noiseTrack.audioCtx.createBufferSource();
-      noiseTrack.source.buffer = buffer;
-      noiseTrack.source.loop = true;
-      noiseTrack.source.connect(noiseTrack.gainNode);
-      noiseTrack.source.start();
-    }
+        noiseTrack.source = noiseTrack.audioCtx.createBufferSource();
+        noiseTrack.source.buffer = buffer;
+        noiseTrack.source.loop = true;
+        noiseTrack.source.connect(noiseTrack.gainNode);
+        noiseTrack.source.start();
 
-    function fadeNoiseTo(volume, time = 0.5) {
-      const now = noiseTrack.audioCtx.currentTime;
-      noiseTrack.gainNode.gain.cancelScheduledValues(now);
-      noiseTrack.gainNode.gain.linearRampToValueAtTime(volume, now + time);
-    }
-
-    async function setupIntercomOnce() {
-      if (intercomState.audioCtx) return;
-
-      intercomState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-      if (intercomState.audioCtx.state === 'suspended') {
-        await intercomState.audioCtx.resume();
+        // Fade in to target volume
+        const now = noiseTrack.audioCtx.currentTime;
+        noiseTrack.gainNode.gain.linearRampToValueAtTime(
+          noiseTrack.volume,
+          now + noiseTrack.fadeTime
+        );
+        document.getElementById("playNoise").onclick = () => stopNoise();
+        document.getElementById("playNoise").innerText = "Stop Noise"
       }
 
-      intercomState.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      intercomState.source = intercomState.audioCtx.createMediaStreamSource(intercomState.stream);
-    }
-
-    async function startIntercom() {
-      await setupIntercomOnce();
-
-      if (!intercomState.isConnected) {
-        intercomState.source.connect(intercomState.audioCtx.destination);
-        intercomState.isConnected = true;
+      function stopNoise() {
+        noiseTrack.source.stop();
+        document.getElementById("playNoise").onclick = () => loadAndPlayNoise();
+        document.getElementById("playNoise").innerText = "Start Noise"
       }
 
-      fadeNoiseTo(noiseTrack.volume / 2, noiseTrack.fadeTime);
-    }
-
-    function stopIntercom() {
-      if (intercomState.isConnected) {
-        intercomState.source.disconnect();
-        intercomState.isConnected = false;
+      function fadeNoiseTo(volume, time = 0.5) {
+        const now = noiseTrack.audioCtx.currentTime;
+        noiseTrack.gainNode.gain.cancelScheduledValues(now);
+        noiseTrack.gainNode.gain.linearRampToValueAtTime(volume, now + time);
       }
 
-      fadeNoiseTo(noiseTrack.volume, noiseTrack.fadeTime);
-    }
+      async function setupIntercomOnce() {
+        if (intercomState.audioCtx) return;
 
-    document.getElementById("playNoise").onclick = () => loadAndPlayNoise();
+        intercomState.audioCtx = new (window.AudioContext ||
+          window.webkitAudioContext)();
 
-    const intercomBtn = document.getElementById("intercom");
-    intercomBtn.addEventListener("pointerdown", startIntercom);
-    intercomBtn.addEventListener("pointerup", stopIntercom);
-    intercomBtn.addEventListener("pointercancel", stopIntercom);
-    intercomBtn.addEventListener("pointerleave", stopIntercom);
-  </script>
-</body>
+        if (intercomState.audioCtx.state === "suspended") {
+          await intercomState.audioCtx.resume();
+        }
+
+        intercomState.stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
+        intercomState.source = intercomState.audioCtx.createMediaStreamSource(
+          intercomState.stream
+        );
+      }
+
+      async function startIntercom() {
+        await setupIntercomOnce();
+
+        if (!intercomState.isConnected) {
+          intercomState.source.connect(intercomState.audioCtx.destination);
+          intercomState.isConnected = true;
+        }
+
+        fadeNoiseTo(noiseTrack.volume / 2, noiseTrack.fadeTime);
+      }
+
+      function stopIntercom() {
+        if (intercomState.isConnected) {
+          intercomState.source.disconnect();
+          intercomState.isConnected = false;
+        }
+
+        fadeNoiseTo(noiseTrack.volume, noiseTrack.fadeTime);
+      }
+
+      document.getElementById("playNoise").onclick = () => loadAndPlayNoise();
+
+      const intercomBtn = document.getElementById("intercom");
+      intercomBtn.addEventListener("pointerdown", startIntercom);
+      intercomBtn.addEventListener("pointerup", stopIntercom);
+      intercomBtn.addEventListener("pointercancel", stopIntercom);
+      intercomBtn.addEventListener("pointerleave", stopIntercom);
+    </script>
+  </body>
 </html>

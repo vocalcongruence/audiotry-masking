@@ -26,11 +26,12 @@
     const intercomState = {
       audioCtx: null,
       stream: null,
-      source: null
+      source: null,
+      isConnected: false
     };
 
     async function loadAndPlayNoise() {
-      if (noiseTrack.audioCtx) return; // already playing
+      if (noiseTrack.audioCtx) return;
 
       noiseTrack.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       noiseTrack.gainNode = noiseTrack.audioCtx.createGain();
@@ -54,10 +55,10 @@
       noiseTrack.gainNode.gain.linearRampToValueAtTime(volume, now + time);
     }
 
-    async function startIntercom() {
-      if (!intercomState.audioCtx) {
-        intercomState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
+    async function setupIntercomOnce() {
+      if (intercomState.audioCtx) return;
+
+      intercomState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
       if (intercomState.audioCtx.state === 'suspended') {
         await intercomState.audioCtx.resume();
@@ -65,16 +66,23 @@
 
       intercomState.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       intercomState.source = intercomState.audioCtx.createMediaStreamSource(intercomState.stream);
-      intercomState.source.connect(intercomState.audioCtx.destination);
+    }
+
+    async function startIntercom() {
+      await setupIntercomOnce();
+
+      if (!intercomState.isConnected) {
+        intercomState.source.connect(intercomState.audioCtx.destination);
+        intercomState.isConnected = true;
+      }
 
       fadeNoiseTo(noiseTrack.volume / 2, noiseTrack.fadeTime);
     }
 
     function stopIntercom() {
-      if (intercomState.source) intercomState.source.disconnect();
-      if (intercomState.stream) {
-        intercomState.stream.getTracks().forEach(track => track.stop());
-        intercomState.stream = null;
+      if (intercomState.isConnected) {
+        intercomState.source.disconnect();
+        intercomState.isConnected = false;
       }
 
       fadeNoiseTo(noiseTrack.volume, noiseTrack.fadeTime);
@@ -86,7 +94,7 @@
     intercomBtn.addEventListener("pointerdown", startIntercom);
     intercomBtn.addEventListener("pointerup", stopIntercom);
     intercomBtn.addEventListener("pointercancel", stopIntercom);
-    intercomBtn.addEventListener("pointerleave", stopIntercom); // fallback if finger moves off button
+    intercomBtn.addEventListener("pointerleave", stopIntercom);
   </script>
 </body>
 </html>

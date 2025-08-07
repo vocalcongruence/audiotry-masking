@@ -106,6 +106,7 @@
   </head>
   <body>
     <h1>Audio Masking Tool</h1>
+    <p>debug 0</p>
     <button id="intercom">
       <span id="intercom-icon" class="material-symbols-outlined"> mic </span><span id="intercom-label">Start Intercom</span>
     </button>
@@ -203,7 +204,7 @@
           intercomState.isConnected = true;
         }
 
-        fadeNoiseTo(noiseTrack.volume / 2, noiseTrack.fadeTime);
+        //fadeNoiseTo(noiseTrack.volume / 2, noiseTrack.fadeTime);
 
         document.getElementById("intercom").onclick = stopIntercom;
         document.getElementById("intercom-label").innerText = "Stop Intercom";
@@ -216,7 +217,7 @@
           intercomState.isConnected = false;
         }
         
-        fadeNoiseTo(noiseTrack.volume, noiseTrack.fadeTime);
+        //fadeNoiseTo(noiseTrack.volume, noiseTrack.fadeTime);
         document.getElementById("intercom").onclick = startIntercom;
         document.getElementById("intercom-label").innerText = "Start Intercom";
         document.getElementById("intercom-icon").innerText = "mic";

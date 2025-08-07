@@ -67,7 +67,7 @@
 
       .material-symbols-outlined {
         font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
-        font-size: 24rem;
+        font-size: 12rem;
       }
 
       body {
@@ -87,8 +87,9 @@
       }
       button {
         width: 100%;
+        max-width: 400px;
         height: 40vh;
-        font-size: 10rem;
+        font-size: 4rem;
         user-select: none;
         background: var(--color-pink);
         display: flex;
@@ -115,7 +116,7 @@
     <script>
       const noiseTrack = {
         volume: 0.1,
-        fadeTime: 0,
+        fadeTime: 2,
         audioCtx: null,
         gainNode: null,
         source: null,
@@ -190,6 +191,7 @@
       }
 
       async function startIntercom() {
+        console.log("start intercom")
         await setupIntercomOnce();
 
         if (!intercomState.isConnected) {
@@ -215,8 +217,7 @@
       intercomBtn.addEventListener("pointerdown", startIntercom);
       intercomBtn.addEventListener("pointerup", stopIntercom);
       intercomBtn.addEventListener("pointercancel", stopIntercom);
-      intercomBtn.addEventListener("pointerleave", stopIntercom);
+      //intercomBtn.addEventListener("pointerleave", stopIntercom);
     </script>
   </body>
 </html>
-

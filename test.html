@@ -107,7 +107,7 @@
   <body>
     <h1>Audio Masking Tool</h1>
     <button id="intercom">
-      <span id="intercom-icon" class="material-symbols-outlined"> mic </span><span id="intercom-label">Intercom</span>
+      <span id="intercom-icon" class="material-symbols-outlined"> mic </span><span id="intercom-label">Start Intercom</span>
     </button>
     <button id="playNoise">
       <span id="noise-icon" class="material-symbols-outlined"> volume_up </span><span id="noise-label">Start Noise</span>
@@ -152,16 +152,20 @@
         noiseTrack.source.loop = true;
         noiseTrack.source.connect(noiseTrack.gainNode);
         noiseTrack.source.start();
+        startNoise();
+        stopNoise();
+      }
 
-        
+      function startNoise() {
+        noiseTrack.audioCtx.resume();
         document.getElementById("playNoise").onclick = () => stopNoise();
         document.getElementById("noise-label").innerText = "Stop Noise";
         document.getElementById("noise-icon").innerText = "volume_off";
       }
 
       function stopNoise() {
-        noiseTrack.source.stop();
-        document.getElementById("playNoise").onclick = () => loadAndPlayNoise();
+        noiseTrack.audioCtx.suspend();
+        document.getElementById("playNoise").onclick = () => startNoise();
         document.getElementById("noise-label").innerText = "Start Noise";
         document.getElementById("noise-icon").innerText = "volume_up";
       }
@@ -200,24 +204,26 @@
         }
 
         fadeNoiseTo(noiseTrack.volume / 2, noiseTrack.fadeTime);
-      }
 
+        document.getElementById("intercom").onclick = stopIntercom;
+        document.getElementById("intercom-label").innerText = "Stop Intercom";
+        document.getElementById("intercom-icon").innerText = "mic_off";
+      }
+      
       function stopIntercom() {
         if (intercomState.isConnected) {
           intercomState.source.disconnect();
           intercomState.isConnected = false;
         }
-
+        
         fadeNoiseTo(noiseTrack.volume, noiseTrack.fadeTime);
+        document.getElementById("intercom").onclick = startIntercom;
+        document.getElementById("intercom-label").innerText = "Start Intercom";
+        document.getElementById("intercom-icon").innerText = "mic";
       }
 
       document.getElementById("playNoise").onclick = () => loadAndPlayNoise();
-
-      const intercomBtn = document.getElementById("intercom");
-      intercomBtn.addEventListener("pointerdown", startIntercom);
-      intercomBtn.addEventListener("pointerup", stopIntercom);
-      intercomBtn.addEventListener("pointercancel", stopIntercom);
-      //intercomBtn.addEventListener("pointerleave", stopIntercom);
+      document.getElementById("intercom").onclick = startIntercom;
     </script>
   </body>
 </html>

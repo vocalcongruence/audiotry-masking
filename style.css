@@ -1,0 +1,99 @@
+:root {
+  --black: #1f1f1f;
+  --white: rgb(209, 209, 209);
+  --pink: #d98abb;
+  --lightpink: #eebedc;
+  --blue: hsl(222, 52%, 70%);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+  color: var(--white);
+  accent-color: var(--color-pink);
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--black);
+  padding: 16px;
+  height: 100dvh;
+}
+
+h1 {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+td {
+    padding: 16px;
+}
+
+input {
+    accent-color: var(--blue);
+}
+
+fieldset {
+    border: none;
+}
+
+legend {
+    margin-bottom: 8px;
+}
+
+input[type="radio"] {
+    width: 16px;
+    margin-right: 8px;
+}
+
+button {
+    width: 30vw;
+    max-width: 200px;
+    aspect-ratio: 1;
+    border: none;
+    border-radius: 16px;
+    background-color: var(--pink);
+    transition: .1s;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+button:hover {
+    background-color: var(--lightpink);
+    cursor: pointer;
+}
+
+button span {
+    color: var(--black);
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+button .material-symbols-outlined {
+    font-size: 6rem;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    font-weight: 500;
+}
+
+label.radio-label {
+    flex-direction: row;
+    font-weight: 300;
+    margin-bottom: 8px;
+}

@@ -49,10 +49,11 @@ fieldset {
 
 legend {
     margin-bottom: 8px;
+    font-size: 24px;
 }
 
 input[type="radio"] {
-    width: 16px;
+    width: 20px;
     margin-right: 8px;
 }
 
@@ -90,10 +91,12 @@ label {
     display: flex;
     flex-direction: column;
     font-weight: 500;
+    font-size: 24px;
 }
 
 label.radio-label {
     flex-direction: row;
     font-weight: 300;
     margin-bottom: 8px;
+    font-size: 20px;
 }

@@ -36,7 +36,7 @@ h1 {
 }
 
 td {
-    padding: 16px;
+    padding: 1vw;
 }
 
 input {
@@ -57,8 +57,8 @@ input[type="radio"] {
 }
 
 button {
-    width: 30vw;
-    max-width: 200px;
+    width: 45vw;
+    max-width: 400px;
     aspect-ratio: 1;
     border: none;
     border-radius: 16px;

@@ -41,6 +41,10 @@ td {
 
 input {
     accent-color: var(--blue);
+    transform: scale(2);
+    width: 50%;
+    margin-left: 25%;
+    margin-top: 16px;
 }
 
 fieldset {
@@ -54,7 +58,9 @@ legend {
 
 input[type="radio"] {
     width: 20px;
-    margin-right: 8px;
+    margin: 0;
+    margin-left: 8px;
+    margin-right: 16px;
 }
 
 button {
@@ -96,7 +102,9 @@ label {
 
 label.radio-label {
     flex-direction: row;
+    align-items: center;
     font-weight: 300;
     margin-bottom: 8px;
     font-size: 20px;
+    height: 32px;
 }

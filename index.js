@@ -110,6 +110,8 @@ async function handleFlavorChange(e) {
 
   if (selected === "whitenoise") {
     NOISE_TRACK.noiseFile = "./audio/noise.wav";
+  } else if (selected === "pinknoise") {
+    NOISE_TRACK.noiseFile = "./audio/Pink_noise.ogg";
   } else if (selected === "rain") {
     NOISE_TRACK.noiseFile = "./audio/rain.mp3";
   }

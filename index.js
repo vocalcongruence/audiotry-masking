@@ -79,7 +79,7 @@ async function playNoise() {
   NOISE_TRACK.isPlaying = true;
 
   document.getElementById("playNoise").onclick = stopNoise;
-  document.getElementById("noise-label").innerText = "Stop Noise";
+  document.getElementById("noise-label").innerHTML = "Stop<br/>Noise";
   document.getElementById("noise-icon").innerText = "volume_off";
 }
 
@@ -88,7 +88,7 @@ async function stopNoise() {
   NOISE_TRACK.isPlaying = false;
 
   document.getElementById("playNoise").onclick = playNoise;
-  document.getElementById("noise-label").innerText = "Start Noise";
+  document.getElementById("noise-label").innerHTML = "Start<br/>Noise";
   document.getElementById("noise-icon").innerText = "volume_up";
 }
 
@@ -117,7 +117,7 @@ async function handleFlavorChange(e) {
   }
 
   if (noiseWasPlaying) {
-    playNoise();
+    await playNoise();
   }
   thawUI();
 }
@@ -157,7 +157,7 @@ async function playIntercom() {
 
   setNoiseVolume(NOISE_TRACK.volume / 2, NOISE_TRACK.fadeTime);
   document.getElementById("intercom").onclick = stopIntercom;
-  document.getElementById("intercom-label").innerText = "Stop Intercom";
+  document.getElementById("intercom-label").innerHTML = "Stop<br/>Intercom";
   document.getElementById("intercom-icon").innerText = "mic_off";
 }
 
@@ -169,7 +169,7 @@ async function stopIntercom() {
 
   setNoiseVolume(NOISE_TRACK.volume, NOISE_TRACK.fadeTime);
   document.getElementById("intercom").onclick = playIntercom;
-  document.getElementById("intercom-label").innerText = "Start Intercom";
+  document.getElementById("intercom-label").innerHTML = "Start<br/>Intercom";
   document.getElementById("intercom-icon").innerText = "mic";
 }
 

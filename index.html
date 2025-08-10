@@ -16,9 +16,12 @@
 
     <link rel="stylesheet" href="./style.css" />
 
-    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="icon" type="image/png" href="./favicon.png" />
   </head>
   <body>
+    <a id="logo" href="https://vocalcongruence.org/"
+      ><img src="./logo.svg"
+    /></a>
     <h1>Audio Masking Tool</h1>
 
     <table>
@@ -45,14 +48,28 @@
         <td>
           <label>
             Intercom Volume
-            <input id="intercom-volume" type="range"  min="0" max="1" step=".01" value=".2" />
+            <input
+              id="intercom-volume"
+              type="range"
+              min="0"
+              max="1"
+              step=".01"
+              value=".2"
+            />
           </label>
         </td>
 
         <td>
           <label>
             Noise Volume
-            <input id="noise-volume" type="range" min="0" max="1" step=".01" value=".2" />
+            <input
+              id="noise-volume"
+              type="range"
+              min="0"
+              max="1"
+              step=".01"
+              value=".2"
+            />
           </label>
         </td>
       </tr>
@@ -63,12 +80,23 @@
           <fieldset>
             <legend>Noise Flavor</legend>
             <label class="radio-label">
-              <input id="flavor-whitenoise" type="radio" name="flavor" value="whitenoise" checked />
+              <input
+                id="flavor-whitenoise"
+                type="radio"
+                name="flavor"
+                value="whitenoise"
+                checked
+              />
               White Noise
             </label>
 
             <label class="radio-label">
-              <input id="flavor-pinknoise" type="radio" name="flavor" value="pinknoise" />
+              <input
+                id="flavor-pinknoise"
+                type="radio"
+                name="flavor"
+                value="pinknoise"
+              />
               Pink Noise
             </label>
 
@@ -80,6 +108,11 @@
         </td>
       </tr>
     </table>
+
+    <a id="help" href="#"
+      ><span class="material-symbols-outlined"> help </span
+      >How to Use</a
+    >
 
     <script src="./index.js"></script>
   </body>

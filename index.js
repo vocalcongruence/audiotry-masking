@@ -10,7 +10,7 @@ const NOISE_TRACK = {
   source: null,
   buffer: null,
   isPlaying: false,
-  noiseFile: "./audio/rain.mp3",
+  noiseFile: "./audio/noise.wav",
 };
 
 const INTERCOM_TRACK = {
@@ -107,7 +107,7 @@ async function loadIntercom() {
   if (INTERCOM_TRACK.stream) return;
 
   const constraints = {
-    audio: /*isAndroid()*/ false
+    audio: /android/i.test(navigator.userAgent)
       ? {
           echoCancellation: false,
           noiseSuppression: false,

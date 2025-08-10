@@ -1,5 +1,6 @@
 :root {
   --black: #1f1f1f;
+  --darkgray: hsl(0, 0%, 20%);
   --white: rgb(209, 209, 209);
   --pink: #d98abb;
   --lightpink: #eebedc;
@@ -81,6 +82,11 @@ button {
 button:hover {
     background-color: var(--lightpink);
     cursor: pointer;
+}
+
+button:disabled {
+    background-color: var(--darkgray);
+    cursor: wait;
 }
 
 button span {

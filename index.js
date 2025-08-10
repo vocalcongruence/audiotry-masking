@@ -32,16 +32,28 @@ function attachEvents() {
   document.getElementById("playNoise").onclick = playNoise;
   document.getElementById("intercom").onclick = playIntercom;
 
-  document.getElementById("noise-volume").onclick = (e) => {
+  document.getElementById("noise-volume").onchange = (e) => {
     setNoiseVolume(e.currentTarget.value);
   };
-  document.getElementById("intercom-volume").onclick = (e) => {
+  document.getElementById("intercom-volume").onchange = (e) => {
     setIntercomVolume(e.currentTarget.value);
   };
 
   document.querySelectorAll('input[name="flavor"]').forEach((radio) => {
     radio.addEventListener("change", handleFlavorChange);
   });
+}
+
+function freezeUI() {
+  document
+    .querySelectorAll("input, button")
+    .forEach((input) => (input.disabled = true));
+}
+
+function thawUI() {
+  document
+    .querySelectorAll("input, button")
+    .forEach((input) => (input.disabled = false));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -88,8 +100,12 @@ async function setNoiseVolume(volume, time = 0) {
 
 async function handleFlavorChange(e) {
   const selected = e.target.value;
+  freezeUI();
 
-  await stopNoise();
+  let noiseWasPlaying = NOISE_TRACK.isPlaying;
+  if (noiseWasPlaying) {
+    await stopNoise();
+  }
   NOISE_TRACK.buffer = null;
 
   if (selected === "whitenoise") {
@@ -98,7 +114,10 @@ async function handleFlavorChange(e) {
     NOISE_TRACK.noiseFile = "./audio/rain.mp3";
   }
 
-  playNoise();
+  if (noiseWasPlaying) {
+    playNoise();
+  }
+  thawUI();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////

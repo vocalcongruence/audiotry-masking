@@ -23,14 +23,18 @@
       <tr>
         <td>
           <button id="intercom">
-            <span id="intercom-icon" class="material-symbols-outlined"> mic </span>
-            <span id="intercom-label">Start<br/>Intercom</span>
+            <span id="intercom-icon" class="material-symbols-outlined">
+              mic
+            </span>
+            <span id="intercom-label">Start<br />Intercom</span>
           </button>
         </td>
         <td>
           <button id="playNoise">
-            <span id="noise-icon" class="material-symbols-outlined"> volume_up </span>
-            <span id="noise-label">Start<br/>Noise</span>
+            <span id="noise-icon" class="material-symbols-outlined">
+              volume_up
+            </span>
+            <span id="noise-label">Start<br />Noise</span>
           </button>
         </td>
       </tr>
@@ -57,17 +61,17 @@
           <fieldset>
             <legend>Noise Flavor</legend>
             <label class="radio-label">
-              <input type="radio" name="flavor">
+              <input type="radio" name="flavor" />
               White Noise
             </label>
-            
+
             <label class="radio-label">
-              <input type="radio" name="flavor">
+              <input type="radio" name="flavor" />
               Pink Noise
             </label>
-            
+
             <label class="radio-label">
-              <input type="radio" name="flavor">
+              <input type="radio" name="flavor" />
               Brown Noise
             </label>
           </fieldset>
@@ -75,7 +79,10 @@
       </tr>
     </table>
 
+    <script src="./index.js"></script>
+
     <script>
+      /*
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const outputGain = audioCtx.createGain();
       outputGain.connect(audioCtx.destination);
@@ -188,7 +195,7 @@
       }
 
       document.getElementById("playNoise").onclick = playNoise;
-      document.getElementById("intercom").onclick = startIntercom;
+      document.getElementById("intercom").onclick = startIntercom;*/
     </script>
   </body>
 </html>
